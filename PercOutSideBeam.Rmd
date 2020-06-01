@@ -1,0 +1,72 @@
+---
+title: "PercentageOutsideBeam"
+output: html_notebook
+---
+
+```{r importData, echo=FALSE}
+library(data.table)
+library(ggplot2)
+library(magrittr)
+
+min2 = function(x){
+  temp <- sort(x)[2]
+}
+
+alldata <- fread("e:/rf/percOutsideBeam/ftpTest/temp/All.csv")
+alldata$postCode <- substr(alldata$Sector,1,3)
+alldata$SiteFreq <- paste(substr(alldata$Site,3,8), alldata$DL_EARFCN, sep = "_")
+#head(alldata)
+
+siteList <- alldata[,.(cellCount = .N),
+                    by = .(SiteFreq)]
+siteList <- siteList[cellCount > 1]
+
+alldata.site <- alldata[,.(min2OB = min2(percentOutsideBeamwidth),
+                           min2O180 = min2(percentOutside180beamwidth)),
+                        by = .(SiteFreq,postCode, DL_EARFCN)]
+alldata.site.3sigma <- alldata.site[,.(OB_3sigma = min(mean(min2OB, na.rm = T) + 2*sd(min2OB, na.rm = T), 100, na.rm = T), O180_3sigma = min(mean(min2O180, na.rm = T) + 2*sd(min2O180, na.rm = T), 100, na.rm = T)), by=.(postCode, DL_EARFCN)]
+
+sectorList <- alldata.site.3sigma[alldata.site, on = .(postCode, DL_EARFCN)]
+
+```
+
+
+
+
+## Filter with 2 Sigma Value w.r.t Postcode
+
+
+### Sector List
+
+```{r 3sigma, echo=FALSE}
+print(sectorList[min2O180 > O180_3sigma & min2OB > OB_3sigma])
+
+
+#head(alldata.site.3sigma)
+uPC <- alldata$postCode %>% unique()
+
+
+```
+
+## Scatter Plot by Postcode
+
+
+```{r plot, echo=FALSE}
+for(tpc in uPC){
+  
+  OB_3sigma <- alldata.site.3sigma[postCode == tpc]
+  O180_3sigma <- alldata.site.3sigma[postCode == tpc]
+  
+  gplot <- ggplot(alldata.site[postCode == tpc], aes(x = min2OB, y = min2O180))+
+  geom_point(color = "blue", alpha = 0.5) + facet_grid(postCode~DL_EARFCN) +
+  scale_x_continuous(breaks = seq(0,100,10), name = "2nd Min. of Percentage of Outside beam")+
+  scale_y_continuous(breaks = seq(0,100,10), name = "2nd Min. of Percentage of outside 180") +
+  geom_vline(data=OB_3sigma, aes(xintercept = OB_3sigma), linetype = 2) + 
+  geom_hline(data=O180_3sigma, aes(yintercept = O180_3sigma), linetype = 2) 
+  
+  print(gplot)
+}
+```
+
+
+
