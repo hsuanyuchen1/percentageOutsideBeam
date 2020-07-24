@@ -13,12 +13,11 @@ outsideBeamList = function(tempFileDir){
     temp <- sort(x, decreasing = T)[2]
   }
   
-  alldata <- fread(tempFileDir) %>% na.omit()
+  alldata <- fread(tempFileDir, na.strings = "N/A") %>% na.omit()
   #remove duplicate
   alldata <- alldata[,.(totalBins = max(totalBins, na.rm = T),
                           percentOutsideBeamwidth = min(percentOutsideBeamwidth, na.rm = T),
-                          percentOutside180beamwidth = min(percentOutside180beamwidth, na.rm = T),
-                          CT_RRCAttempts = max(CT_RRCAttempts)),
+                          percentOutside180beamwidth = min(percentOutside180beamwidth, na.rm = T)),
                      by = .(Site, Sector, PCI, DL_EARFCN)]
   alldata$postCode <- substr(alldata$Sector,1,3)
   alldata$SiteFreq <- paste(substr(alldata$Site,3,8), alldata$DL_EARFCN, sep = "_")
@@ -35,10 +34,10 @@ outsideBeamList = function(tempFileDir){
                              max2O180 = max2(percentOutside180beamwidth)),
                           by = .(SiteFreq,postCode, DL_EARFCN)]
   #calculate the 2 sigma and 3 sigma value on postcode and freq level
-  alldata.site.3sigma <- alldata.site[,.(OB_2sigmaThreshold = min(mean(max2OB, na.rm = T) + 2*sd(max2OB, na.rm = T), 100, na.rm = T), 
-                                         O180_2sigmaThreshold = min(mean(max2O180, na.rm = T) + 2*sd(max2O180, na.rm = T), 100, na.rm = T),
-                                         OB_3sigmaThreshold = min(mean(max2OB, na.rm = T) + 3*sd(max2OB, na.rm = T), 100, na.rm = T), 
-                                         O180_3sigmaThreshold = min(mean(max2O180, na.rm = T) + 3*sd(max2O180, na.rm = T), 100, na.rm = T)
+  alldata.site.3sigma <- alldata.site[,.(OB_2sigmaThreshold = min(mean(max2OB, na.rm = T) + 2*sd(max2OB, na.rm = T), 90, na.rm = T), 
+                                         O180_2sigmaThreshold = min(mean(max2O180, na.rm = T) + 2*sd(max2O180, na.rm = T), 90, na.rm = T),
+                                         OB_3sigmaThreshold = min(mean(max2OB, na.rm = T) + 3*sd(max2OB, na.rm = T), 90, na.rm = T), 
+                                         O180_3sigmaThreshold = min(mean(max2O180, na.rm = T) + 3*sd(max2O180, na.rm = T), 90, na.rm = T)
                                          ), 
                                       by=.(postCode, DL_EARFCN)]
   #join the data on site-freq level and the corresponding 3 sigma and 2 sigma values
@@ -52,5 +51,6 @@ outsideBeamList = function(tempFileDir){
   
   fwrite(filterSiteList, "e:/rf/percOutsideBeam/ftpTest/temp/filterSiteList.csv")
   fwrite(filterCellList, "e:/rf/percOutsideBeam/ftpTest/temp/filterCellList.csv")
+  fwrite(alldata.site.3sigma, "e:/rf/percOutsideBeam/ftpTest/temp/thresholds.csv")
 }
 

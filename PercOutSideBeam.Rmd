@@ -9,7 +9,7 @@ library(ggplot2)
 library(magrittr)
 
 min2 = function(x){
-  temp <- sort(x)[2]
+  temp <- sort(x, decreasing = T)[2]
 }
 
 alldata <- fread("e:/rf/percOutsideBeam/ftpTest/temp/All.csv")
@@ -39,12 +39,17 @@ sectorList <- alldata.site.3sigma[alldata.site, on = .(postCode, DL_EARFCN)]
 ### Sector List
 
 ```{r 3sigma, echo=FALSE}
-print(sectorList[min2O180 > O180_3sigma & min2OB > OB_3sigma])
+colnames(sectorList)[3:4] <- c("OB_2sigma",   "O180_2sigma")
+#print(sectorList[min2O180 > O180_2sigma | min2OB > OB_2sigma])
+sectorList[min2O180 > O180_2sigma | min2OB > OB_2sigma]
 
 
 #head(alldata.site.3sigma)
 uPC <- alldata$postCode %>% unique()
 
+for (tpc in uPC){
+  sectorList[(min2O180 > O180_2sigma | min2OB > OB_2sigma) & postCode == tpc] %>% print()
+}
 
 ```
 

@@ -1,3 +1,4 @@
+cat(format(Sys.time(), usetz = T),"\n", file = "e:/rf/percOutsideBeam/ftpTest/perceObLog.txt", append = T)
 library(rmarkdown)
 library(magrittr)
 
@@ -11,6 +12,7 @@ filterSiteList <- "e:/rf/percOutsideBeam/ftpTest/temp/filterSiteList.csv"
 filterCellList <- "e:/rf/percOutsideBeam/ftpTest/temp/filterCellList.csv"
 
 fileList <- list.files(landingZone, full.names = T, pattern = ".csv")
+cat(fileList, "\n",file = "e:/rf/percOutsideBeam/ftpTest/perceObLog.txt", append = T)
 
 if (length(fileList > 0)) {
   for (tfile in fileList) {
